@@ -23,7 +23,7 @@ namespace VendingMachine
 
 	class Program
 	{
-		static string[] input = null;
+		static string[] input_arr = null;
 		static int inputIndex = 0;
 
 		static Dictionary<String, InventoryItem> s_inventory = new Dictionary<string,InventoryItem>();
@@ -32,7 +32,7 @@ namespace VendingMachine
 
 		static string GetInputline()
 		{
-			var res = input[inputIndex];
+			var res = input_arr[inputIndex];
 			++inputIndex;
 			return res;
 		}
@@ -44,7 +44,7 @@ namespace VendingMachine
 
 		static bool hasMoreInput()
 		{
-			return inputIndex <= input.Length;
+			return inputIndex < input_arr.Length;
 		}
 
 		static void AddInventoryItem(string itemStr)
@@ -52,9 +52,11 @@ namespace VendingMachine
 			var props = itemStr.Split(',');
 			var item = new InventoryItem();
 			item.Id = props[0];
-			item.Name = props[0];
-			item.Cost = float.Parse(props[0]);
-			item.Quantity = int.Parse(props[0]);
+			item.Name = props[1];
+			item.Cost = float.Parse(props[2]);
+			item.Quantity = int.Parse(props[3]);
+
+			s_inventory[item.Id] = item;
 		}
 
 		static void AddChangeLot(string item)
@@ -114,11 +116,72 @@ namespace VendingMachine
 			}
 		}
 
+		static float s_changeBox = 0;
 		static void DoActions()
 		{
+			bool hasNumber = false;
+			bool hasLetter = false;
+
+			int curNumber = -1;
+			char curLetter = 'x';
+
+			float curMoney = 0.0F;
+
 			foreach(var action in s_actions)
 			{
-				// TODO::jT do action
+				if(action[0] == '#')
+				{
+					// refund
+					curMoney = 0.0F;
+					hasNumber = false;
+					hasLetter = false;
+				}
+				else if(action.Length == 1)
+				{
+					// its either a number or a letter
+					int inputNum = 0;
+					if(int.TryParse(action, out inputNum))
+					{
+						// it was a number
+						curNumber = inputNum;
+						hasNumber = true;
+					}
+					else
+					{
+						// it was a letter
+						curLetter = action[0];
+						hasLetter = true;
+						hasNumber = false;
+					}
+				}
+				else if(action[0] == '$')
+				{
+					// they put in money
+					float moneyInput = float.Parse(action.Substring(1));
+					curMoney += moneyInput;
+				}
+				// ignoring the else case for now
+
+				if(hasNumber && hasLetter)
+				{
+					// button was pushed
+					string id = curLetter.ToString() + curNumber.ToString();
+					var item = s_inventory[id];
+					if(item != null)
+					{
+						if(item.Quantity > 0 && item.Cost <= curMoney)
+						{
+							// buy the item
+							item.Quantity--;
+
+
+							hasNumber = false;
+							hasLetter = false;
+
+						}
+					}
+					
+				}
 			}
 		}
 
@@ -130,10 +193,10 @@ namespace VendingMachine
 		static void Main(string[] args)
 		{
 			// bleh, bad style...
-			input = System.IO.File.ReadAllLines(@"C:\Users\Public\TestFolder\WriteLines2.txt");
+			input_arr = System.IO.File.ReadAllLines(@"C:\input.txt");
 			ReadInput();
 			DoActions();
-
+			OutputResults();
 		}
 	}
 }
