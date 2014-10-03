@@ -173,7 +173,7 @@ namespace VendingMachine
 						{
 							// buy the item
 							item.Quantity--;
-
+							float change = GetChange();
 
 							hasNumber = false;
 							hasLetter = false;
