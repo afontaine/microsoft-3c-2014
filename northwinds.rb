@@ -8,9 +8,10 @@ end
 
 File.open("northwinds_in.txt") do |i|
 	File.open("northwinds_out.txt", 'w') do |o|
-		i.each_line do |l|
+		ls = i.readlines
+		ls.each do |l|
 			o.write(get_value(l).to_s)
-			o.write("\n")
+			o.write("\n") unless l == ls.last
 		end
 	end
 end
